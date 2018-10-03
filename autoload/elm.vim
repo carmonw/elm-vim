@@ -127,32 +127,29 @@ endf
 function! elm#Syntastic(input) abort
 	let l:fixes = []
 
-	let l:bin = 'elm-make'
+	let l:bin = 'elm make'
 	let l:format = '--report=json'
 	let l:input = shellescape(a:input)
 	let l:output = '--output=' . shellescape(syntastic#util#DevNull())
 	let l:command = l:bin . ' ' . l:format  . ' ' . l:input . ' ' . l:output
-	let l:reports = s:ExecuteInRoot(l:command)
+  let l:reports = s:ExecuteInRoot(l:command)
 
-	for l:report in split(l:reports, '\n')
-		if l:report[0] ==# '['
-            for l:error in elm#util#DecodeJSON(l:report)
-                if g:elm_syntastic_show_warnings == 0 && l:error.type ==? 'warning'
-                else
-                    if a:input == l:error.file
-                        call add(s:errors, l:error)
-                        call add(l:fixes, {'filename': l:error.file,
-                                    \'valid': 1,
-                                    \'bufnr': bufnr('%'),
-                                    \'type': (l:error.type ==? 'error') ? 'E' : 'W',
-                                    \'lnum': l:error.region.start.line,
-                                    \'col': l:error.region.start.column,
-                                    \'text': l:error.overview})
-                    endif
-                endif
-            endfor
-        endif
-	endfor
+  if l:reports !=# ''
+    let l:reports_jsonified = elm#util#DecodeJSON(l:reports)
+    for l:report in l:reports_jsonified.errors
+      for l:error in l:report.problems
+        call add(s:errors, l:error)
+        call add(l:fixes, {
+          \'filename': l:report.path,
+          \'valid': 1,
+          \'bufnr': bufnr('%'),
+          \'type': 'E',
+          \'lnum': l:error.region.start.line,
+          \'col': l:error.region.start.column,
+          \'text': l:error.title})
+      endfor
+    endfor
+  endif
 
 	return l:fixes
 endf
@@ -341,13 +338,13 @@ function! elm#Test() abort
 	endif
 endf
 
-" Returns the closest parent with an elm-package.json file.
+" Returns the closest parent with an elm.json file.
 function! elm#FindRootDirectory() abort
 	let l:elm_root = getbufvar('%', 'elmRoot')
 	if empty(l:elm_root)
 		let l:current_file = expand('%:p')
 		let l:dir_current_file = fnameescape(fnamemodify(l:current_file, ':h'))
-		let l:match = findfile('elm-package.json', l:dir_current_file . ';')
+		let l:match = findfile('elm.json', l:dir_current_file . ';')
 		if empty(l:match)
 			let l:elm_root = ''
 		else
