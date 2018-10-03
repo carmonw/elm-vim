@@ -132,7 +132,7 @@ function! elm#util#GoToModule(name)
 endfunction
 
 function! s:findLocalModule(rel_path, root)
-  let l:package_json = a:root . '/elm-package.json'
+  let l:package_json = a:root . '/elm.json'
   if exists('*json_decode')
     let l:package = json_decode(readfile(l:package_json))
     let l:source_roots = l:package['source-directories']
