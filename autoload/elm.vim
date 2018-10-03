@@ -125,13 +125,13 @@ endf
 
 
 function! elm#Syntastic(input) abort
-	let l:fixes = []
+  let l:fixes = []
 
-	let l:bin = 'elm make'
-	let l:format = '--report=json'
-	let l:input = shellescape(a:input)
-	let l:output = '--output=' . shellescape(syntastic#util#DevNull())
-	let l:command = l:bin . ' ' . l:format  . ' ' . l:input . ' ' . l:output
+  let l:bin = 'elm make'
+  let l:format = '--report=json'
+  let l:input = shellescape(a:input)
+  let l:output = '--output=' . shellescape(syntastic#util#DevNull())
+  let l:command = l:bin . ' ' . l:format  . ' ' . l:input . ' ' . l:output
   let l:reports = s:ExecuteInRoot(l:command)
 
   if l:reports !=# ''
@@ -151,7 +151,7 @@ function! elm#Syntastic(input) abort
     endfor
   endif
 
-	return l:fixes
+  return l:fixes
 endf
 
 function! elm#Build(input, output, show_warnings) abort
