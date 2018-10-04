@@ -123,7 +123,6 @@ function! elm#BrowseDocs() abort
 	endif
 endf
 
-
 function! elm#Syntastic(input) abort
   let l:fixes = []
 
@@ -136,19 +135,21 @@ function! elm#Syntastic(input) abort
 
   if l:reports !=# ''
     let l:reports_jsonified = elm#util#DecodeJSON(l:reports)
-    for l:report in l:reports_jsonified.errors
-      for l:error in l:report.problems
-        call add(s:errors, l:error)
-        call add(l:fixes, {
-          \'filename': l:report.path,
-          \'valid': 1,
-          \'bufnr': bufnr('%'),
-          \'type': 'E',
-          \'lnum': l:error.region.start.line,
-          \'col': l:error.region.start.column,
-          \'text': l:error.title})
+    if l:reports_jsonified.type ==# 'compile-errors'
+      for l:report in l:reports_jsonified.errors
+        for l:error in l:report.problems
+          call add(s:errors, l:error)
+          call add(l:fixes, {
+            \'filename': l:report.path,
+            \'valid': 1,
+            \'bufnr': bufnr('%'),
+            \'type': 'E',
+            \'lnum': l:error.region.start.line,
+            \'col': l:error.region.start.column,
+            \'text': l:error.title})
+        endfor
       endfor
-    endfor
+    endif
   endif
 
   return l:fixes
