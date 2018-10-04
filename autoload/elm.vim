@@ -156,65 +156,69 @@ function! elm#Syntastic(input) abort
 endf
 
 function! elm#Build(input, output, show_warnings) abort
-	let s:errors = []
-	let l:fixes = []
-	let l:rawlines = []
+  let s:errors = []
+  let l:fixes = []
+  let l:rawlines = []
 
-	let l:bin = 'elm-make'
-	let l:format = '--report=json'
-	let l:input = shellescape(a:input)
-	let l:output = '--output=' . shellescape(a:output)
-	let l:command = l:bin . ' ' . l:format  . ' ' . l:input . ' ' . l:output
-	let l:reports = s:ExecuteInRoot(l:command)
+  let l:bin = 'elm make'
+  let l:format = '--report=json'
+  let l:input = shellescape(a:input)
+  let l:output = '--output=' . shellescape(a:output)
+  let l:command = l:bin . ' ' . l:format  . ' ' . l:input . ' ' . l:output
+  let l:reports = s:ExecuteInRoot(l:command)
 
-	for l:report in split(l:reports, '\n')
-		if l:report[0] ==# '['
-			for l:error in elm#util#DecodeJSON(l:report)
-				if a:show_warnings == 0 && l:error.type ==? 'warning'
-				else
-					call add(s:errors, l:error)
-					call add(l:fixes, {'filename': l:error.file,
-								\'valid': 1,
-								\'type': (l:error.type ==? 'error') ? 'E' : 'W',
-								\'lnum': l:error.region.start.line,
-								\'col': l:error.region.start.column,
-								\'text': l:error.overview})
-				endif
-			endfor
-		else
-			call add(l:rawlines, l:report)
-		endif
-	endfor
+  if l:reports !=# ''
+    let l:reports_jsonified = elm#util#DecodeJSON(l:reports)
+    if l:reports_jsonified.type ==# 'compile-errors'
+      for l:report in l:reports_jsonified.errors
+        for l:error in l:report.problems
+          call add(s:errors, l:error)
+          call add(l:fixes, {
+            \'filename': l:report.path,
+            \'valid': 1,
+            \'bufnr': bufnr('%'),
+            \'type': 'E',
+            \'lnum': l:error.region.start.line,
+            \'col': l:error.region.start.column,
+            \'text': l:error.title})
+          call add(l:rawlines, l:error)
+        endfor
+      endfor
+    endif
+  endif
 
-	let l:details = join(l:rawlines, "\n")
-	let l:lines = split(l:details, "\n")
-	if !empty(l:lines)
-		let l:overview = l:lines[0]
-	else
-		let l:overview = ''
-	endif
+  let l:details = join(l:rawlines, "\n")
+  let l:lines = split(l:details, "\n")
+  if !empty(l:lines)
+    let l:overview = l:lines[0]
+  else
+    let l:overview = ''
+  endif
 
-	if l:details ==# '' || l:details =~? '^Successfully.*'
-	else
-		call add(s:errors, {'overview': l:details, 'details': l:details})
-		call add(l:fixes, {'filename': expand('%', 1),
-					\'valid': 1,
-					\'type': 'E',
-					\'lnum': 0,
-					\'col': 0,
-					\'text': l:overview})
-	endif
+  if l:details ==# '' || l:details =~? '^Successfully.*'
+  else
+    call add(s:errors, {
+      \'overview': l:details,
+      \'details': l:details})
+    call add(l:fixes, {
+      \'filename': expand('%', 1),
+      \'valid': 1,
+      \'type': 'E',
+      \'lnum': 0,
+      \'col': 0,
+      \'text': l:overview})
+  endif
 
-	return l:fixes
+  return l:fixes
 endf
 
 " Make the given file, or the current file if none is given.
 function! elm#Make(...) abort
-	if elm#util#CheckBin('elm-make', 'http://elm-lang.org/install') ==# ''
+	if elm#util#CheckBin('elm', 'http://elm-lang.org/install') ==# ''
 		return
 	endif
 
-	call elm#util#Echo('elm-make:', 'building...')
+	call elm#util#Echo('elm make:', 'building...')
 
 	let l:input = (a:0 == 0) ? expand('%:p') : a:1
 	let l:fixes = elm#Build(l:input, g:elm_make_output_file, g:elm_make_show_warnings)
