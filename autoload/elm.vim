@@ -147,8 +147,7 @@ function! elm#Syntastic(input) abort
           \'col': 1,
           \'text': l:reports_jsonified.title})
       endif
-    endif
-    if l:reports_jsonified.type ==# 'compile-errors'
+    elseif l:reports_jsonified.type ==# 'compile-errors'
       for l:report in l:reports_jsonified.errors
         for l:error in l:report.problems
           if a:input == l:report.path
@@ -194,8 +193,7 @@ function! elm#Build(input, output, show_warnings) abort
         \'lnum': 1,
         \'col': 1,
         \'text': l:reports_jsonified.title})
-    endif
-    if l:reports_jsonified.type ==# 'compile-errors'
+    elseif l:reports_jsonified.type ==# 'compile-errors'
       for l:report in l:reports_jsonified.errors
         for l:error in l:report.problems
           call add(s:errors, l:error)
