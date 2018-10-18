@@ -135,18 +135,33 @@ function! elm#Syntastic(input) abort
 
   if l:reports !=# ''
     let l:reports_jsonified = elm#util#DecodeJSON(l:reports)
+    if l:reports_jsonified.type ==# 'error'
+      if a:input == l:reports_jsonified.path
+        call add(s:errors, l:reports_jsonified)
+        call add(l:fixes, {
+          \'filename': l:reports_jsonified.path,
+          \'valid': 1,
+          \'bufnr': bufnr('%'),
+          \'type': 'E',
+          \'lnum': 1,
+          \'col': 1,
+          \'text': l:reports_jsonified.title})
+      endif
+    endif
     if l:reports_jsonified.type ==# 'compile-errors'
       for l:report in l:reports_jsonified.errors
         for l:error in l:report.problems
-          call add(s:errors, l:error)
-          call add(l:fixes, {
-            \'filename': l:report.path,
-            \'valid': 1,
-            \'bufnr': bufnr('%'),
-            \'type': 'E',
-            \'lnum': l:error.region.start.line,
-            \'col': l:error.region.start.column,
-            \'text': l:error.title})
+          if a:input == l:report.path
+            call add(s:errors, l:error)
+            call add(l:fixes, {
+              \'filename': l:report.path,
+              \'valid': 1,
+              \'bufnr': bufnr('%'),
+              \'type': 'E',
+              \'lnum': l:error.region.start.line,
+              \'col': l:error.region.start.column,
+              \'text': l:error.title})
+          endif
         endfor
       endfor
     endif
