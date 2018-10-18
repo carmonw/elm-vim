@@ -184,6 +184,17 @@ function! elm#Build(input, output, show_warnings) abort
 
   if l:reports !=# ''
     let l:reports_jsonified = elm#util#DecodeJSON(l:reports)
+    if l:reports_jsonified.type ==# 'error'
+      call add(s:errors, l:reports_jsonified)
+      call add(l:fixes, {
+        \'filename': l:reports_jsonified.path,
+        \'valid': 1,
+        \'bufnr': bufnr('%'),
+        \'type': 'E',
+        \'lnum': 1,
+        \'col': 1,
+        \'text': l:reports_jsonified.title})
+    endif
     if l:reports_jsonified.type ==# 'compile-errors'
       for l:report in l:reports_jsonified.errors
         for l:error in l:report.problems
